@@ -6,99 +6,21 @@
   <title>🎉 Happy Birthday!</title>
   <style>
     * { box-sizing: border-box; }
-
-    body, html {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      overflow: hidden;
-      font-family: 'Poppins', Arial, sans-serif;
-      background: #000;
-      color: white;
-    }
-
-    #slideshow-container {
-      position: relative;
-      width: 100vw;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    .slide {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      opacity: 0;
-      transition: opacity 1.5s ease-in-out;
-    }
-
-    .slide.active {
-      opacity: 1;
-    }
-
-    #message {
-      position: absolute;
-      bottom: 40px;
-      width: 100%;
-      text-align: center;
-      font-size: clamp(1.5rem, 3vw, 2.5rem);
-      font-weight: bold;
-      background: rgba(0, 0, 0, 0.5);
-      padding: 15px;
-      border-radius: 10px;
-    }
-
-    #startButton {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      padding: 15px 30px;
-      font-size: 1.2rem;
-      border: none;
-      border-radius: 30px;
-      background: linear-gradient(135deg, #ff4081, #ff8a65);
-      color: #fff;
-      cursor: pointer;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-      z-index: 10;
-    }
-
-    #startButton:hover {
-      background: linear-gradient(135deg, #ff6f91, #ffb677);
-    }
-
-    #loading {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 1rem;
-      color: #fff;
-      opacity: 0.8;
-    }
-
-    #musicCredit {
-      position: absolute;
-      bottom: 10px;
-      width: 100%;
-      text-align: center;
-      font-size: 0.8rem;
-      color: rgba(255,255,255,0.7);
-    }
-
-    /* Hide the YouTube player visually but keep audio playing */
-    #ytplayer {
-      position: absolute;
-      top: -9999px;
-      left: -9999px;
-      width: 1px;
-      height: 1px;
-    }
+    body, html { margin:0; padding:0; height:100%; overflow:hidden; font-family:'Poppins', Arial, sans-serif; background:#000; color:white; }
+    #slideshow-container { position:relative; width:100vw; height:100vh; overflow:hidden; }
+    .slide { position:absolute; width:100%; height:100%; object-fit:cover; opacity:0; transition: opacity 1.5s ease-in-out; }
+    .slide.active { opacity:1; }
+    #message { position:absolute; bottom:40px; width:100%; text-align:center; font-size:clamp(1.5rem,3vw,2.5rem); font-weight:bold; background:rgba(0,0,0,0.5); padding:15px; border-radius:10px; }
+    #startButton { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); padding:15px 30px; font-size:1.2rem; border:none; border-radius:30px; background:linear-gradient(135deg,#ff4081,#ff8a65); color:#fff; cursor:pointer; box-shadow:0 4px 20px rgba(0,0,0,0.4); z-index:10; }
+    #startButton:hover { background:linear-gradient(135deg,#ff6f91,#ffb677); }
+    #loading { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:1rem; color:#fff; opacity:0.8; }
+    #musicCredit { position:absolute; bottom:10px; width:100%; text-align:center; font-size:0.8rem; color:rgba(255,255,255,0.7); }
+    /* Hide the YouTube player */
+    #ytplayer { position:absolute; top:-9999px; left:-9999px; width:1px; height:1px; }
   </style>
 </head>
 <body>
+
 <div id="slideshow-container">
   <div id="loading">Loading your surprise... 🎁</div>
   <button id="startButton">Start Birthday Surprise 🎉</button>
@@ -106,52 +28,33 @@
   <div id="musicCredit" style="display:none;">🎵 Playing from YouTube</div>
 </div>
 
-<!-- Hidden YouTube iframe for background music -->
-<iframe
-  id="ytplayer"
-  type="text/html"
-  src=""
-  frameborder="0"
-  allow="autoplay"
-></iframe>
+<!-- YouTube player -->
+<div id="ytplayer"></div>
 
+<script src="https://www.youtube.com/iframe_api"></script>
 <script>
-  // === Local images ===
   const totalImages = 33;
   const imageUrls = [];
-  for (let i = 1; i <= totalImages; i++) {
-    imageUrls.push(`img/kay${i}.jpg`);
-  }
-
-  // === Your chosen YouTube video ID ===
-  // Example: https://www.youtube.com/watch?v=5R8EpAv4miA -> ID is "5R8EpAv4miA"
-  const YOUTUBE_VIDEO_ID = "zb_IOQhHvsE"; // replace with your favorite birthday song
-  const PLAYLIST_ID = "RDzb_IOQhHvsE";
+  for (let i=1; i<=totalImages; i++) imageUrls.push(`img/kay${i}.jpg`);
 
   const container = document.getElementById('slideshow-container');
   const startButton = document.getElementById('startButton');
   const loading = document.getElementById('loading');
   const message = document.getElementById('message');
   const musicCredit = document.getElementById('musicCredit');
-  const ytPlayer = document.getElementById('ytplayer');
 
   let slides = [];
   let currentSlide = 0;
+  let player;
 
+  // Preload images
   function preloadImages() {
     let loadedCount = 0;
-    imageUrls.forEach((url) => {
+    imageUrls.forEach(url=>{
       const img = new Image();
       img.src = url;
       img.className = 'slide';
-      img.onload = () => {
-        loadedCount++;
-        if (loadedCount === imageUrls.length) {
-          loading.style.display = 'none';
-          startButton.style.display = 'block';
-        }
-      };
-      img.onerror = () => {
+      img.onload = img.onerror = () => {
         loadedCount++;
         if (loadedCount === imageUrls.length) {
           loading.style.display = 'none';
@@ -163,19 +66,39 @@
     });
   }
 
+  // YouTube API ready callback
+  function onYouTubeIframeAPIReady() {
+    player = new YT.Player('ytplayer', {
+      height: '0',
+      width: '0',
+      videoId: 'zb_IOQhHvsE', // your YouTube song ID
+      playerVars: {
+        autoplay: 0,
+        controls: 0,
+        loop: 1,
+        playlist: 'zb_IOQhHvsE', // required for loop
+        start: 5, // start 5 seconds into the video
+        modestbranding: 1
+      },
+      events: {
+        onReady: () => { console.log('YouTube player ready'); }
+      }
+    });
+  }
+
   function startSlideshow() {
     startButton.style.display = 'none';
     message.style.display = 'block';
     musicCredit.style.display = 'block';
 
-    // Embed YouTube with autoplay once user clicks
-    const ytUrl = `https://www.youtube.com/embed/${YOUTUBE_VIDEO_ID}?autoplay=1&loop=1&playlist=${YOUTUBE_VIDEO_ID}`;
-    ytPlayer.src = ytUrl;
+    // Play YouTube music (user gesture triggers mobile playback)
+    if(player) player.playVideo();
 
-    if (slides.length > 0) slides[0].classList.add('active');
-    setInterval(() => {
+    // Start slideshow
+    if(slides.length>0) slides[0].classList.add('active');
+    setInterval(()=>{
       slides[currentSlide].classList.remove('active');
-      currentSlide = (currentSlide + 1) % slides.length;
+      currentSlide = (currentSlide+1) % slides.length;
       slides[currentSlide].classList.add('active');
     }, 3500);
   }
@@ -183,5 +106,6 @@
   startButton.addEventListener('click', startSlideshow);
   preloadImages();
 </script>
+
 </body>
 </html>
